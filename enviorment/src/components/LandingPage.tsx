@@ -1,153 +1,205 @@
-import React from 'react';
-import { BookOpen, Target, Trophy, User, TrendingUp, Star, Flame } from 'lucide-react';
-import type { UserType, CurrentPage } from '../App';
+import { useState } from 'react';
+import { BookOpen, Target, Trophy, FolderOpen, Zap, Award, TreePine, Fish, Bird, Router as Butterfly } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import type { UserType } from '../App';
 
-interface DashboardProps {
-  userType: UserType;
-  user: any;
-  onNavigate: (page: CurrentPage) => void;
+interface LandingPageProps {
+  onUserTypeSelect: (type: UserType) => void;
 }
 
-export default function Dashboard({ userType, user, onNavigate }: DashboardProps) {
-  const progressWidth = (user.points / 200) * 100;
-  
-  const menuItems = userType === 'kids' 
-    ? [
-        { icon: BookOpen, title: 'Study', subtitle: 'Learn & Play', page: 'study' as CurrentPage, color: 'from-green-400 to-blue-400' },
-        { icon: Target, title: 'Tasks', subtitle: 'Eco Missions', page: 'tasks' as CurrentPage, color: 'from-blue-400 to-purple-400' },
-        { icon: Trophy, title: 'Achievements', subtitle: 'Rewards', page: 'achievements' as CurrentPage, color: 'from-purple-400 to-pink-400' }
-      ]
-    : [
-        { icon: BookOpen, title: 'Projects', subtitle: 'Real Impact', page: 'study' as CurrentPage, color: 'from-green-500 to-teal-500' },
-        { icon: Target, title: 'Challenges', subtitle: 'Advanced Tasks', page: 'tasks' as CurrentPage, color: 'from-teal-500 to-blue-500' },
-        { icon: Trophy, title: 'Achievements', subtitle: 'Recognition', page: 'achievements' as CurrentPage, color: 'from-blue-500 to-indigo-500' }
-      ];
+interface InteractiveObject {
+  icon: LucideIcon;
+  position: string;
+  sound: string;
+  color: string;
+}
+
+const interactiveObjects: InteractiveObject[] = [
+  { icon: TreePine, position: 'top-16 left-16', sound: '🌳 Trees produce oxygen!', color: 'text-green-600' },
+  { icon: Fish, position: 'bottom-32 left-32', sound: '🐟 Protect our oceans!', color: 'text-blue-500' },
+  { icon: Bird, position: 'top-32 right-24', sound: '🐦 Save bird habitats!', color: 'text-yellow-600' },
+  { icon: Butterfly, position: 'bottom-16 right-16', sound: '🦋 Pollinators need our help!', color: 'text-purple-500' }
+];
+
+export default function LandingPage({ onUserTypeSelect }: LandingPageProps) {
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [soundMessage, setSoundMessage] = useState<string>('');
+
+  const handleObjectClick = (message: string) => {
+    setSoundMessage(message);
+    const timer = setTimeout(() => setSoundMessage(''), 2000);
+    return () => clearTimeout(timer);
+  };
+
+  interface OptionType {
+    icon: LucideIcon;
+    title: string;
+    description: string;
+    color: string;
+  }
+
+  const kidsOptions: OptionType[] = [
+    { icon: BookOpen, title: 'Study', description: 'Interactive lessons & games', color: 'from-green-400 to-blue-400' },
+    { icon: Target, title: 'Tasks', description: 'Fun eco-challenges', color: 'from-blue-400 to-purple-400' },
+    { icon: Trophy, title: 'Achievements', description: 'Badges & rewards', color: 'from-purple-400 to-pink-400' }
+  ];
+
+  const adultsOptions: OptionType[] = [
+    { icon: FolderOpen, title: 'Projects', description: 'Real-world initiatives', color: 'from-green-500 to-teal-500' },
+    { icon: Zap, title: 'Challenges', description: 'Advanced eco-missions', color: 'from-teal-500 to-blue-500' },
+    { icon: Award, title: 'Achievements', description: 'Professional recognition', color: 'from-blue-500 to-indigo-500' }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 lg:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+      {/* Interactive Background Objects */}
+      {interactiveObjects.map((obj, index) => (
+        <button
+          key={index}
+          onClick={() => handleObjectClick(obj.sound)}
+          className={`absolute ${obj.position} ${obj.color} hover:scale-125 transition-all duration-300 animate-pulse hover:animate-bounce z-10`}
+        >
+          <obj.icon className="w-12 h-12 drop-shadow-lg" />
+        </button>
+      ))}
+
+      {/* Sound Message Display */}
+      {soundMessage && (
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-white px-6 py-3 rounded-full shadow-lg z-50 animate-fade-in">
+          <p className="text-sm font-medium text-gray-800">{soundMessage}</p>
+        </div>
+      )}
+
+      <div className="relative z-20 min-h-screen flex flex-col items-center justify-center p-8">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800">Welcome back, {user.name}!</h1>
-                <p className="text-gray-600">Ready to continue your eco-journey?</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl mb-1">
-                {userType === 'kids' ? '🌟' : '🎯'}
-              </div>
-              <div className="text-sm text-gray-500">{userType === 'kids' ? 'Young Hero' : 'Eco Leader'}</div>
-            </div>
-          </div>
-
-          {/* Progress Section */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gradient-to-r from-green-100 to-green-200 p-4 rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <Star className="w-6 h-6 text-green-600" />
-                <span className="text-2xl font-bold text-green-700">{user.points}</span>
-              </div>
-              <p className="text-sm text-green-600 font-medium">Total Points</p>
-            </div>
-            
-            <div className="bg-gradient-to-r from-blue-100 to-blue-200 p-4 rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <Trophy className="w-6 h-6 text-blue-600" />
-                <span className="text-2xl font-bold text-blue-700">{user.badges}</span>
-              </div>
-              <p className="text-sm text-blue-600 font-medium">Badges Earned</p>
-            </div>
-            
-            <div className="bg-gradient-to-r from-orange-100 to-orange-200 p-4 rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <Flame className="w-6 h-6 text-orange-600" />
-                <span className="text-2xl font-bold text-orange-700">{user.streak}</span>
-              </div>
-              <p className="text-sm text-orange-600 font-medium">Day Streak</p>
-            </div>
-            
-            <div className="bg-gradient-to-r from-purple-100 to-purple-200 p-4 rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-                <span className="text-2xl font-bold text-purple-700">{user.level}</span>
-              </div>
-              <p className="text-sm text-purple-600 font-medium">Current Level</p>
-            </div>
-          </div>
-
-          {/* Level Progress */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Level Progress</span>
-              <span className="text-sm text-gray-500">{user.points}/200 XP</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div 
-                className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${progressWidth}%` }}
-              ></div>
-            </div>
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Eco-Warrior</span>
-              <span>Next: Eco-Hero</span>
-            </div>
-          </div>
+        <div className="text-center mb-12">
+          <h1 className="text-6xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">
+            Choose Your Path
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Select your learning journey and discover how you can make a positive impact on our planet
+          </p>
         </div>
 
-        {/* Main Menu */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {menuItems.map((item) => (
-            <button
-              key={item.title}
-              onClick={() => onNavigate(item.page)}
-              className={`group relative p-8 rounded-2xl shadow-xl bg-gradient-to-r ${item.color} text-white hover:shadow-2xl transform hover:scale-105 transition-all duration-300 overflow-hidden`}
-            >
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
-              <div className="relative z-10">
-                <item.icon className="w-12 h-12 mb-4 group-hover:animate-bounce" />
-                <h3 className="text-2xl font-bold mb-2">{item.title}</h3>
-                <p className="text-white text-opacity-90">{item.subtitle}</p>
-              </div>
+        {/* Main Cards */}
+        <div className="flex flex-col lg:flex-row gap-8 mb-8 w-full max-w-4xl">
+          {/* Kids Card */}
+          <div className="flex-1 group">
+            <div className="relative h-96 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl shadow-2xl transform transition-all duration-500 hover:scale-105 hover:shadow-3xl cursor-pointer overflow-hidden"
+                 onClick={() => setSelectedCard(selectedCard === 'kids' ? null : 'kids')}>
+              <div className="absolute inset-0  bg-opacity-20 group-hover:bg-opacity-10 transition-all duration-300"></div>
               
-              {/* Decorative Elements */}
-              <div className="absolute top-4 right-4 text-4xl opacity-20 group-hover:opacity-40 transition-opacity">
-                {item.title === 'Study' || item.title === 'Projects' ? '📚' : 
-                 item.title === 'Tasks' || item.title === 'Challenges' ? '🎯' : '🏆'}
+              {/* Card Content */}
+              <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
+                <div>
+                  <div className="text-6xl mb-4 animate-bounce">🧒</div>
+                  <h2 className="text-4xl font-bold mb-3">Kids</h2>
+                  <p className="text-lg opacity-90">Ages 6-12</p>
+                  <p className="text-base opacity-75 mt-2">Fun games, colorful lessons, and easy eco-tasks</p>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className=" bg-opacity-20 px-4 py-2 rounded-full text-sm">
+                    Interactive Learning
+                  </span>
+                  <div className="text-2xl group-hover:animate-bounce">🌟</div>
+                </div>
               </div>
-            </button>
-          ))}
+
+              {/* Parallax Effect */}
+              <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-500">
+                <div className="absolute top-8 right-8 text-6xl animate-pulse">🌱</div>
+                <div className="absolute bottom-8 left-8 text-4xl animate-pulse" style={{ animationDelay: '1s' }}>🦋</div>
+              </div>
+            </div>
+
+            {/* Kids Options */}
+            {selectedCard === 'kids' && (
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+                {kidsOptions.map((option, index) => (
+                  <button
+                    key={option.title}
+                    onClick={() => onUserTypeSelect('kids')}
+                    className={`p-6 rounded-xl bg-gradient-to-r ${option.color} text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300`}
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <option.icon className="w-8 h-8 mb-3 mx-auto" />
+                    <h3 className="font-semibold text-lg mb-2">{option.title}</h3>
+                    <p className="text-sm opacity-90">{option.description}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Adults Card */}
+          <div className="flex-1 group">
+            <div className="relative h-96 bg-gradient-to-br from-teal-500 to-indigo-600 rounded-2xl shadow-2xl transform transition-all duration-500 hover:scale-105 hover:shadow-3xl cursor-pointer overflow-hidden"
+                 onClick={() => setSelectedCard(selectedCard === 'adults' ? null : 'adults')}>
+              <div className="absolute inset-0  bg-opacity-20 group-hover:bg-opacity-10 transition-all duration-300"></div>
+              
+              {/* Card Content */}
+              <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
+                <div>
+                  <div className="text-6xl mb-4 animate-pulse">🎓</div>
+                  <h2 className="text-4xl font-bold mb-3">Adults</h2>
+                  <p className="text-lg opacity-90">College & Beyond</p>
+                  <p className="text-base opacity-75 mt-2">Advanced projects, research, and leadership challenges</p>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className=" bg-opacity-20 px-4 py-2 rounded-full text-sm">
+                    Professional Impact
+                  </span>
+                  <div className="text-2xl group-hover:animate-spin">🌍</div>
+                </div>
+              </div>
+
+              {/* Parallax Effect */}
+              <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-500">
+                <div className="absolute top-8 right-8 text-6xl animate-pulse">🔬</div>
+                <div className="absolute bottom-8 left-8 text-4xl animate-pulse" style={{ animationDelay: '1s' }}>🏆</div>
+              </div>
+            </div>
+
+            {/* Adults Options */}
+            {selectedCard === 'adults' && (
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+                {adultsOptions.map((option, index) => (
+                  <button
+                    key={option.title}
+                    onClick={() => onUserTypeSelect('adults')}
+                    className={`p-6 rounded-xl bg-gradient-to-r ${option.color} text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300`}
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <option.icon className="w-8 h-8 mb-3 mx-auto" />
+                    <h3 className="font-semibold text-lg mb-2">{option.title}</h3>
+                    <p className="text-sm opacity-90">{option.description}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Today's Activity</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="text-center p-6 bg-green-50 rounded-xl">
-              <div className="text-4xl mb-2">🌱</div>
-              <h3 className="font-semibold text-gray-800">Lessons Completed</h3>
-              <p className="text-2xl font-bold text-green-600">3</p>
-            </div>
-            
-            <div className="text-center p-6 bg-blue-50 rounded-xl">
-              <div className="text-4xl mb-2">💧</div>
-              <h3 className="font-semibold text-gray-800">Eco-Tasks Done</h3>
-              <p className="text-2xl font-bold text-blue-600">2</p>
-            </div>
-            
-            <div className="text-center p-6 bg-purple-50 rounded-xl">
-              <div className="text-4xl mb-2">⭐</div>
-              <h3 className="font-semibold text-gray-800">Points Earned</h3>
-              <p className="text-2xl font-bold text-purple-600">45</p>
-            </div>
-          </div>
+        {/* Call to Action */}
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">🌟 Click on environmental objects around the screen for eco-tips!</p>
+          <p className="text-sm text-gray-500">Join thousands of eco-learners making a difference worldwide</p>
         </div>
       </div>
+
+      <style>
+        {`
+          @keyframes fade-in {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          
+          .animate-fade-in { animation: fade-in 0.6s ease-out; }
+          .shadow-3xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        `}
+      </style>
     </div>
   );
 }

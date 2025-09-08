@@ -1,13 +1,12 @@
-﻿import { Trophy, Star, Award, Target, Zap, Crown } from "lucide-react";
+import { Trophy, Star } from "lucide-react";
 import type { UserType, CurrentPage } from "../App";
 
 interface AchievementsPageProps {
   userType: UserType;
-  user: any;
   onNavigate: (page: CurrentPage) => void;
 }
 
-export default function AchievementsPage({ userType, user, onNavigate }: AchievementsPageProps) {
+export default function AchievementsPage({ userType, onNavigate }: AchievementsPageProps) {
   const achievements = [
     {
       id: 1,

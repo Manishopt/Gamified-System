@@ -21,13 +21,13 @@ function App() {
     setCurrentPage('landing');
   };
 
+  const navigateTo = (page: CurrentPage) => {
+    setCurrentPage(page);
+  };
+
   const handleUserTypeSelect = (type: UserType) => {
     setUserType(type);
     setCurrentPage('dashboard');
-  };
-
-  const navigateTo = (page: CurrentPage) => {
-    setCurrentPage(page);
   };
 
   const renderCurrentPage = () => {
@@ -45,7 +45,7 @@ function App() {
       case 'tasks':
         return <TasksPage userType={userType} onNavigate={navigateTo} />;
       case 'achievements':
-        return <AchievementsPage userType={userType} user={user} onNavigate={navigateTo} />;
+        return <AchievementsPage userType={userType} onNavigate={navigateTo} />;
       default:
         return <LandingPage onUserTypeSelect={handleUserTypeSelect} />;
     }
