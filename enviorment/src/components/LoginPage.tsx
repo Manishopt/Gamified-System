@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { Leaf, TreePine, Waves, Sun, Eye, EyeOff } from 'lucide-react';
 
 interface LoginPageProps {
