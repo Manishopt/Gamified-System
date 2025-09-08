@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ArrowLeft, CheckCircle, Star, PlayCircle, BookOpen } from 'lucide-react';
-import type { UserType, CurrentPage } from '../App';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, CheckCircle, Star, PlayCircle, BookOpen, Award } from 'lucide-react';
+import type { UserType } from '../App';
 
 interface StudyModuleProps {
   userType: UserType;
-  onNavigate: (page: CurrentPage) => void;
 }
 
 const kidsLessons = [
@@ -93,8 +93,23 @@ const adultLessons = [
   }
 ];
 
-export default function StudyModule({ userType, onNavigate }: StudyModuleProps) {
+interface Challenge {
+  id: number;
+  title: string;
+  completed: boolean;
+  points: number;
+}
+
+export default function StudyModule({ userType }: StudyModuleProps) {
+  const navigate = useNavigate();
   const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
+  const [challenges, setChallenges] = useState<Challenge[]>([
+    { id: 1, title: 'Plant Growth Tracker', completed: false, points: 50 },
+    { id: 2, title: 'Water Usage Calculator', completed: true, points: 50 },
+    { id: 3, title: 'Recycling Guide', completed: true, points: 50 },
+    { id: 4, title: 'Carbon Footprint Quiz', completed: true, points: 50 },
+  ]);
+  const [selectedChallenge, setSelectedChallenge] = useState<number | null>(null);
   const lessons = userType === 'kids' ? kidsLessons : adultLessons;
 
   const getDifficultyColor = (difficulty: string) => {
@@ -113,7 +128,7 @@ export default function StudyModule({ userType, onNavigate }: StudyModuleProps) 
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button
-            onClick={() => onNavigate('dashboard')}
+            onClick={() => navigate('/dashboard')}
             className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -170,7 +185,13 @@ export default function StudyModule({ userType, onNavigate }: StudyModuleProps) 
               className={`group bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] cursor-pointer ${
                 lesson.completed ? 'ring-2 ring-green-200' : ''
               }`}
-              onClick={() => setSelectedLesson(selectedLesson === lesson.id ? null : lesson.id)}
+              onClick={() => {
+                if (lesson.title === 'Water Conservation') {
+                  navigate('/study/water-conservation');
+                } else {
+                  setSelectedLesson(selectedLesson === lesson.id ? null : lesson.id);
+                }
+              }}
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -239,6 +260,56 @@ export default function StudyModule({ userType, onNavigate }: StudyModuleProps) 
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Challenges Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+            <Award className="mr-2 text-yellow-500" />
+            Weekly Challenges
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {challenges.map((challenge) => (
+              <div 
+                key={challenge.id}
+                className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl cursor-pointer ${
+                  challenge.completed ? 'ring-2 ring-green-200' : ''
+                }`}
+                onClick={() => setSelectedChallenge(selectedChallenge === challenge.id ? null : challenge.id)}
+              >
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-800">{challenge.title}</h3>
+                    {challenge.completed ? (
+                      <CheckCircle className="w-6 h-6 text-green-500" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
+                    )}
+                  </div>
+                  
+                  {selectedChallenge === challenge.id && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Reward: {challenge.points} points</span>
+                        <button 
+                          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!challenge.completed) {
+                              setChallenges(challenges.map(c => c.id === challenge.id ? { ...c, completed: true } : c));
+                            }
+                            navigate('/task1');
+                          }}
+                        >
+                          {challenge.completed ? 'Completed' : 'Start Task'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Daily Challenge */}

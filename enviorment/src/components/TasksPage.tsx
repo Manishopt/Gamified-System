@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Camera, CheckCircle, Clock, Star, Upload, Target } from 'lucide-react';
-import type { UserType, CurrentPage } from '../App';
+import type { UserType } from '../App';
+type CurrentPage = 'login' | 'landing' | 'dashboard' | 'study' | 'tasks' | 'achievements' | 'task1';
 
 interface TasksPageProps {
   userType: UserType;
@@ -38,7 +39,7 @@ const kidsTasks = [
     points: 30,
     difficulty: 'Medium',
     timeEstimate: '30 min',
-    completed: false,
+    completed: true,
     type: 'photo'
   },
   {
@@ -74,7 +75,7 @@ const adultTasks = [
     points: 75,
     difficulty: 'Expert',
     timeEstimate: '1 week',
-    completed: false,
+    completed: true,
     type: 'project'
   },
   {
@@ -85,7 +86,7 @@ const adultTasks = [
     points: 100,
     difficulty: 'Expert',
     timeEstimate: '3 days',
-    completed: false,
+    completed: true,
     type: 'research'
   },
   {
@@ -105,6 +106,16 @@ export default function TasksPage({ userType, onNavigate }: TasksPageProps) {
   const [selectedTask, setSelectedTask] = useState<number | null>(null);
 
   const tasks = userType === 'kids' ? kidsTasks : adultTasks;
+
+  const handleTaskClick = (taskId: number) => {
+    // For Plastic Free Week task (ID: 4), navigate to Task1
+    if (taskId === 4 && userType === 'adults') {
+      onNavigate('task1');
+      return;
+    }
+    // For other tasks, toggle selection
+    setSelectedTask(selectedTask === taskId ? null : taskId);
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -254,10 +265,17 @@ export default function TasksPage({ userType, onNavigate }: TasksPageProps) {
                       
                       <div className="flex space-x-3">
                         <button 
-                          onClick={() => setSelectedTask(selectedTask === task.id ? null : task.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (task.id === 4 && userType === 'adults') {
+                              onNavigate('task1');
+                            } else {
+                              setSelectedTask(selectedTask === task.id ? null : task.id);
+                            }
+                          }}
                           className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg"
                         >
-                          Start Task
+                          {task.id === 4 && userType === 'adults' ? 'Start Challenge' : 'Start Task'}
                         </button>
                         
                         {task.type === 'photo' && (

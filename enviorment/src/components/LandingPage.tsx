@@ -82,7 +82,7 @@ export default function LandingPage({ onUserTypeSelect }: LandingPageProps) {
         </div>
 
         {/* Main Cards */}
-        <div className="flex flex-col lg:flex-row gap-8 mb-8 w-full max-w-4xl">
+        <div className="flex flex-col lg:flex-row gap-8 mb-8 w-full max-w-5xl">
           {/* Kids Card */}
           <div className="flex-1 group">
             <div className="relative h-96 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl shadow-2xl transform transition-all duration-500 hover:scale-105 hover:shadow-3xl cursor-pointer overflow-hidden"
@@ -115,7 +115,7 @@ export default function LandingPage({ onUserTypeSelect }: LandingPageProps) {
 
             {/* Kids Options */}
             {selectedCard === 'kids' && (
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in text-center">
                 {kidsOptions.map((option, index) => (
                   <button
                     key={option.title}
@@ -164,7 +164,7 @@ export default function LandingPage({ onUserTypeSelect }: LandingPageProps) {
 
             {/* Adults Options */}
             {selectedCard === 'adults' && (
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in text-center">
                 {adultsOptions.map((option, index) => (
                   <button
                     key={option.title}

@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Leaf, TreePine, Waves, Sun, Eye, EyeOff } from 'lucide-react';
+import { Leaf, TreePine, Waves, Sun } from 'lucide-react';
+import { FcGoogle } from 'react-icons/fc';
+import { getAuth, GoogleAuthProvider, signInWithPopup, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import app from '../firebase/firebase';
 
 interface LoginPageProps {
   onLogin: (userData: any) => void;
@@ -16,11 +19,9 @@ const ecoQuotes = [
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({ email: '' });
   const [avatarMood, setAvatarMood] = useState('happy');
 
   useEffect(() => {
@@ -30,37 +31,118 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     return () => clearInterval(quoteInterval);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({ email: '', password: '' });
-    
-    // Basic validation
-    if (!email) {
-      setErrors(prev => ({ ...prev, email: 'Email is required' }));
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      setAvatarMood('excited');
+      
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      const userData = {
+        uid: result.user.uid,
+        email: result.user.email,
+        name: result.user.displayName,
+        photoURL: result.user.photoURL,
+        points: 0
+      };
+      onLogin(userData);
+      // Navigation is now handled by the parent component
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      setErrors({ email: 'Failed to sign in with Google. Please try again.' });
       setAvatarMood('sad');
-      return;
+    } finally {
+      setIsLoading(false);
     }
-    if (!password) {
-      setErrors(prev => ({ ...prev, password: 'Password is required' }));
-      setAvatarMood('sad');
-      return;
-    }
-
-    setIsLoading(true);
-    setAvatarMood('excited');
-    
-    // Simulate login process
-    setTimeout(() => {
-      onLogin({
-        email,
-        name: email.split('@')[0],
-        points: 150,
-        level: 'Eco-Warrior',
-        streak: 7,
-        badges: 5
-      });
-    }, 1500);
   };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({ email: '' });
+    
+    if (!email) {
+      setErrors({ email: 'Email is required' });
+      setAvatarMood('sad');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      const auth = getAuth(app);
+      const actionCodeSettings = {
+        // URL you want to redirect back to after email sign-in is completed
+        url: window.location.origin + '/complete-signin',
+        handleCodeInApp: true,
+      };
+      
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      
+      // Save the email locally to complete sign-in after email click
+      window.localStorage.setItem('emailForSignIn', email);
+      
+      alert(`Sign-in link sent to ${email}. Please check your email to continue.`);
+      setEmail('');
+      
+    } catch (error) {
+      console.error('Error sending sign-in link:', error);
+      setErrors({ email: 'Failed to send sign-in link. Please try again.' });
+      setAvatarMood('sad');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Check if we're returning from an email sign-in link
+  useEffect(() => {
+    const checkEmailSignIn = async () => {
+      const auth = getAuth(app);
+      
+      if (isSignInWithEmailLink(auth, window.location.href)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        
+        if (!email) {
+          // User opened the link on a different device
+          email = window.prompt('Please provide your email for confirmation');
+        }
+        
+        if (email) {
+          try {
+            setIsLoading(true);
+            const result = await signInWithEmailLink(auth, email, window.location.href);
+            
+            // Clear the email from storage
+            window.localStorage.removeItem('emailForSignIn');
+            
+            // User signed in successfully
+            const user = result.user;
+            onLogin({
+              email: user.email,
+              name: user.displayName || email.split('@')[0],
+              photoURL: user.photoURL,
+              points: 0, // Initialize with default values
+              level: 'Beginner',
+              streak: 0,
+              badges: 0
+            });
+            
+            // Remove the sign-in link from the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+          } catch (error) {
+            console.error('Error signing in with email link:', error);
+            setErrors({ email: 'Invalid or expired sign-in link. Please try again.' });
+            setAvatarMood('sad');
+          } finally {
+            setIsLoading(false);
+          }
+        }
+      }
+    };
+    
+    checkEmailSignIn();
+  }, [onLogin]);
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -124,8 +206,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             }`}>
               {avatarMood === 'happy' ? '🌳' : avatarMood === 'excited' ? '🌟' : '🌱'}
             </div>
-            <h2 className="text-3xl font-bold text-gray-800 mt-4">Welcome Back!</h2>
-            <p className="text-gray-600 mt-2">Login to continue your eco-journey</p>
+            <h2 className="text-3xl font-bold text-gray-800 mt-4">Welcome to EcoLearn!</h2>
+            <p className="text-gray-600 mt-2">Sign in to continue your eco-journey</p>
           </div>
 
           {/* Motivational Quote */}
@@ -135,82 +217,70 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-300 focus:outline-none ${
-                  errors.email 
-                    ? 'border-red-300 bg-red-50 animate-shake' 
-                    : 'border-gray-200 focus:border-green-400 focus:bg-green-50 focus:shadow-lg'
-                }`}
-                placeholder="your@email.com"
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1 animate-fade-in">{errors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
+          <div className="space-y-6">
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-300 focus:outline-none pr-12 ${
-                    errors.password 
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-300 focus:outline-none ${
+                    errors.email 
                       ? 'border-red-300 bg-red-50 animate-shake' 
                       : 'border-gray-200 focus:border-green-400 focus:bg-green-50 focus:shadow-lg'
                   }`}
-                  placeholder="Your password"
+                  placeholder="your@email.com"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1 animate-fade-in">{errors.email}</p>
+                )}
               </div>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1 animate-fade-in">{errors.password}</p>
-              )}
+
+              <button
+                type="submit"
+                className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 hover:scale-105 hover:shadow-xl transition-all duration-300"
+              >
+                Get Magic Link
+              </button>
+            </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or sign in with</span>
+              </div>
             </div>
 
+            {/* Google Sign In Button */}
             <button
-              type="submit"
+              onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-500 transform ${
-                isLoading
-                  ? 'bg-green-400 scale-105 animate-pulse'
-                  : 'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 hover:scale-105 hover:shadow-xl'
-              }`}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 bg-white text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
-                  Growing your eco-profile...
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-700 mr-2"></div>
+                  Signing in...
                 </div>
               ) : (
-                'Start Your Eco Journey 🌱'
+                <>
+                  <FcGoogle className="w-5 h-5" />
+                  Continue with Google
+                </>
               )}
             </button>
-          </form>
+          </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <p className="text-sm text-gray-600">
-              New to EcoLearn?{' '}
-              <button className="text-green-600 hover:text-green-700 font-semibold transition-colors">
-                Create Account
-              </button>
+              By continuing, you agree to our{' '}
+              <a href="#" className="text-green-600 hover:underline">Terms of Service</a> and{' '}
+              <a href="#" className="text-green-600 hover:underline">Privacy Policy</a>.
             </p>
           </div>
         </div>

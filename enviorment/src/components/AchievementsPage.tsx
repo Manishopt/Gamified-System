@@ -1,5 +1,6 @@
 import { Trophy, Star } from "lucide-react";
-import type { UserType, CurrentPage } from "../App";
+import type { UserType } from "../App";
+type CurrentPage = 'login' | 'landing' | 'dashboard' | 'study' | 'tasks' | 'achievements' | 'task1';
 
 interface AchievementsPageProps {
   userType: UserType;
